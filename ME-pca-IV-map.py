@@ -59,7 +59,7 @@ stray_shift = [0, 0, 0]
 param_def = np.transpose(np.array([B, theta, xi, D, gamma, etta_0, 
                       S_0, betta, Doppler_shift, filling_factor, stray_shift]))
 
-nodes = 5
+nodes = 6
 
 #making_spaces
 spaces = []
@@ -129,6 +129,7 @@ spectra_file = fits.open(directory + files_list[0])
 x_len = len(files_list)
 y_len = len(spectra_file[0].data[0])
 
+
 inversion_map = np.empty((x_len, y_len, dims))
 
 for x_c in range(x_len):
@@ -152,7 +153,7 @@ for x_c in range(x_len):
         real_sp -= mean
         real_pca = np.dot(real_sp, u)[:pri_comp]
 
-        neigh = sklearn.neighbors.NearestNeighbors(n_neighbors = 3)
+        neigh = sklearn.neighbors.NearestNeighbors(n_neighbors = 3, algorithm = 'ball_tree')
         neigh.fit(sp_rot)
         closest = neigh.kneighbors(np.reshape(real_pca, (1,-1)))
 
@@ -168,33 +169,3 @@ hdul = fits.HDUList([fits.PrimaryHDU(im)])
 name = str(nodes) + '-' +  time.strftime("%H" + "%M", time.localtime())
 hdul.writeto(name + '.fits')
 
-'''
-
-model_I = ((database[closest[1][0][0]] + mean)[0:56] + (database[closest[1][0][0]] + mean)[56:2*56])*0.5
-model_Q = ((database[closest[1][0][0]])[0*56:1*56] - (database[closest[1][0][0]])[1*56:2*56])*0.5
-model_U = ((database[closest[1][0][0]])[2*56:3*56] - (database[closest[1][0][0]])[3*56:4*56])*0.5
-model_V = ((database[closest[1][0][0]])[4*56:5*56] - (database[closest[1][0][0]])[5*56:6*56])*0.5
-model_sp = np.concatenate((model_I, model_Q, model_U, model_V))
-
-
-for t in range(4):
-    plt.subplot(221 + t)
-    plt.plot(argument, (real_sp_con)[56*t: 56*t + 56])
-    plt.plot(argument, model_sp[56*t: 56*t + 56])
-
-plt.show()
-
-    
-model_I = ((database[closest[1][0][0]] + mean)[0:56] + (database[closest[1][0][0]] + mean)[56:2*56])*0.5
-model_Q = ((database[closest[1][0][0]])[0*56:1*56] - (database[closest[1][0][0]])[1*56:2*56])*0.5
-model_U = ((database[closest[1][0][0]])[2*56:3*56] - (database[closest[1][0][0]])[3*56:4*56])*0.5
-model_V = ((database[closest[1][0][0]])[4*56:5*56] - (database[closest[1][0][0]])[5*56:6*56])*0.5
-model_sp = np.concatenate((model_I, model_Q, model_U, model_V))
-
-for t in range(4):
-    plt.subplot(221 + t)
-    plt.plot(argument, (real_sp_con)[56*t: 56*t + 56])
-    plt.plot(argument, model_sp[56*t: 56*t + 56])
-
-plt.show()
-'''
