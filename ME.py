@@ -42,17 +42,17 @@ def ME(line_vec, param_vec, x):
     theta = param_vec[1]     #inclination
     xi = param_vec[2]        #azimuth
     
-    D = param_vec[3]*1e-12        #Doppler width
-    gamma = param_vec[4]*1e-12    #damping
+    D = param_vec[3]*1e-11        #Doppler width
+    gamma = param_vec[4]*1e-11    #damping
     etta_0 = param_vec[5]   #line strength
     
     S_0 = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
     
-    Dop_shift = param_vec[8]*1e-12 #Doppler shift
+    Dop_shift = param_vec[8]*1e-11 #Doppler shift
     
     #units
-    v = (x*1e-12 - Dop_shift)/D
+    v = (x*1e-11 - Dop_shift)/D
     a = gamma/D
     v_b = B * wl0*wl0*el_c/(4*np.pi*mass*c*c*D)
     Df = D*c/(wl0*wl0)
@@ -87,7 +87,7 @@ def ME(line_vec, param_vec, x):
     det = np.power(1 + k_I, 4) + np.power(1 + k_I, 2)*(f_Q*f_Q + f_U*f_U + f_V*f_V - k_Q*k_Q - k_U*k_U - k_V*k_V) - np.power(k_Q*f_Q + k_U*f_U + k_V*f_V, 2)
     
     I = 1 - betta*mu/(1 + betta*mu)*(1 - (1 - k_I)*( (1 + k_I)*(1 + k_I) + f_Q*f_Q + f_U*f_U + f_V*f_V)/det)
-    V = -betta*mu/(1 + betta*mu)*( (1 + k_I)*(1 + k_I)*k_V + f_V*(k_Q*f_Q + k_U*f_U + k_V*f_V))/det
+    V = betta*mu/(1 + betta*mu)*( (1 + k_I)*(1 + k_I)*k_V + f_V*(k_Q*f_Q + k_U*f_U + k_V*f_V))/det
     U = -betta*mu/(1 + betta*mu)/det*( (1 + k_I)*(1 + k_I)*k_U - (1 + k_I)*(k_V*f_Q - k_Q*f_V) + f_U*(k_Q*f_Q +k_U*f_U + k_V*f_V))
     Q = -betta*mu/(1 + betta*mu)/det*( (1 + k_I)*(1 + k_I)*k_Q - (1 + k_I)*(k_U*f_V - k_V*f_U) + f_Q*(k_Q*f_Q +k_U*f_U + k_V*f_V))
     
@@ -98,7 +98,7 @@ def ME(line_vec, param_vec, x):
     
     
     
-    return np.array([I, Q, U, V])
+    return np.transpose(np.array([I, Q, U, V]))
 
 def ME_ff(line_vec, param_vec, x):
     #constant parameters
@@ -118,9 +118,17 @@ def ME_ff(line_vec, param_vec, x):
     S_0 = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
         
-    Dop_shift = param_vec[8]*1e-12 #Doppler shift
+    Dop_shift = param_vec[8] #Doppler shift
     
     filling_factor = param_vec[9]
     stray_shift = param_vec[10]
     
     return (filling_factor*ME([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift], x) + (1 - filling_factor)*ME([wl0, g, mu], [0, theta, xi, D, gamma, etta_0, S_0, betta, stray_shift], x))
+
+def ME_con(line_vec, param_vec, argument):
+    A = [[], [], [], []]
+    for i in range(len(argument)):
+        T = ME_ff(line_vec, param_vec, argument[i])
+        for j in range(4):
+            A[j].append(T[j])
+    return np.concatenate((A[0], A[1], A[2], A[3]))
