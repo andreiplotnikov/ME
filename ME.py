@@ -46,7 +46,9 @@ def ME(line_vec, param_vec, x):
     gamma = param_vec[4]*1e-11    #damping
     etta_0 = param_vec[5]   #line strength
     
-    S_0 = param_vec[6]      #Source function 
+    cont_int = param_vec[6] #contiuum intencity
+    
+    #S_0 = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
     
     Dop_shift = param_vec[8]*1e-11 #Doppler shift
@@ -55,6 +57,7 @@ def ME(line_vec, param_vec, x):
     v = (x*1e-11 - Dop_shift)/D
     a = gamma/D
     v_b = B * wl0*wl0*el_c/(4*np.pi*mass*c*c*D)
+    S_0 = cont_int/(1 + betta * mu)
     Df = D*c/(wl0*wl0)
     
     ka_L = etta_0
@@ -91,10 +94,10 @@ def ME(line_vec, param_vec, x):
     U = -betta*mu/(1 + betta*mu)/det*( (1 + k_I)*(1 + k_I)*k_U - (1 + k_I)*(k_V*f_Q - k_Q*f_V) + f_U*(k_Q*f_Q +k_U*f_U + k_V*f_V))
     Q = -betta*mu/(1 + betta*mu)/det*( (1 + k_I)*(1 + k_I)*k_Q - (1 + k_I)*(k_U*f_V - k_V*f_U) + f_Q*(k_Q*f_Q +k_U*f_U + k_V*f_V))
     
-    I *= S_0*(1 + betta*mu)
-    Q *= S_0*(1 + betta*mu)
-    U *= S_0*(1 + betta*mu)
-    V *= S_0*(1 + betta*mu)
+    I *= cont_int
+    Q *= cont_int
+    U *= cont_int
+    V *= cont_int
     
     
     
@@ -115,7 +118,7 @@ def ME_ff(line_vec, param_vec, x):
     gamma = param_vec[4]    #damping
     etta_0 = param_vec[5]   #line strength
     
-    S_0 = param_vec[6]      #Source function 
+    cont_int = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
         
     Dop_shift = param_vec[8] #Doppler shift
@@ -123,7 +126,7 @@ def ME_ff(line_vec, param_vec, x):
     filling_factor = param_vec[9]
     stray_shift = param_vec[10]
     
-    return (filling_factor*ME([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift], x) + (1 - filling_factor)*ME([wl0, g, mu], [0, theta, xi, D, gamma, etta_0, S_0, betta, stray_shift], x))
+    return (filling_factor*ME([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, cont_int, betta, Dop_shift], x) + (1 - filling_factor)*ME([wl0, g, mu], [0, theta, xi, D, gamma, etta_0, cont_int, betta, stray_shift], x))
 
 def ME_con(line_vec, param_vec, argument):
     A = [[], [], [], []]
