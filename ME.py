@@ -46,7 +46,7 @@ def ME(line_vec, param_vec, x):
     gamma = param_vec[4]*1e-11    #damping
     etta_0 = param_vec[5]   #line strength
     
-    cont_int = param_vec[6] #contiuum intencity
+    cont_int = param_vec[6] #contiuum intensity
     
     #S_0 = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
