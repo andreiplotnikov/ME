@@ -90,26 +90,31 @@ def build_inverse(spectrum_shape, transitional_shape, parameters_shape):
     return model
 
 def generate_profiles(line_vector, flags, spaces, argument, batch_size):
+    
+    #случайные значения параметров
     param_vector = np.random.random((batch_size, len(flags)))*(spaces[2] - spaces[1]) + spaces[1]
     param_vector *= flags    
     param_vector += (1 - flags)*spaces[0]
         
+    #другое распределение параметров для магнитного поля    
     param_vector[:, 0] = 1000*(1 - np.log(np.e*np.random.rand(batch_size)))
             
     x = np.broadcast_to(argument, (batch_size, len(argument)))             
     
+    #генерация профиля
     if batch_size > 1: profile = MEbatch.ME_ff(line_vector, param_vector, x)
     else: profile = ME.ME_ff(line_vector, param_vector.flatten, argument)
     
     
     
-            
+    #шум со случайной интенсивностью
     noise_level = 0.01*np.random.exponential(size = batch_size)
     noise = np.reshape(noise_level, (-1, 1))*np.random.randn(batch_size, 56*4)
     noise = np.reshape(noise, (batch_size, 56, 4))
     
     profile += noise
-        
+    
+    #Доплеровские сдвиги приводятся к положительным значениям
     param_vector[:, 8] += 50
     param_vector[:, 10] += 50
     
