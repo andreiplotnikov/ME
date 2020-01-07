@@ -174,9 +174,11 @@ spectrum_shape  = 56*4
 
 transitional_shape = 100
 
+#названия параметров
 dims_names = ['Strength', 'Inclination', 'Azimuth', 'Doppler broadening', 'Damping', 'Line strength',
               'Continuum intensity', 'Source function gradient', 'Doppler shift', 'Filling factor', 'Stray shift']
 
+#подбираемые параметры
 dims_flags = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 wl0 = 6302.5
@@ -232,8 +234,10 @@ validation_generator = DataGenerator(line_vector = l_v, flags = dims_flags,
 reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.75,
                               verbose=1, patience=5, min_lr=0)
 
+#периодический сброс learning rate к большему значению
 lrd = learning_rate_drop(value = 0.01, period = 50)
 
+#сброс learning rate при достижении малого шага
 lrdt = learning_rate_drop_threshold(value = 0.01, threshold = 1e-5)
 
 
@@ -249,7 +253,7 @@ plt.plot(history.history['val_loss'], label='test')
 plt.legend()
 
 
-
+#проверка на реальных данных
 def check_real(x_c, y_c, spaces):
     directory = 'D:\\fits\\hao\\web\\csac.hao.ucar.edu\\data\\hinode\\sot\\level1\\2017\\09\\05\\SP3D\\20170905_030404\\'
     files_list = os.listdir(directory)
@@ -327,6 +331,7 @@ def save_model():
     name = '.\\models\\' + 'conv-' + str(localtime[0]) + '_' + str(localtime[1]) + '_' + str(localtime[2]) + '_' + str(localtime[3]) + str(localtime[4]) + '.h5'
     inversion.save(name)
     
+#функции для удобства обучения    
 def continue_learning(epochs):
     history = inversion.fit_generator(generator = training_generator, 
                                     validation_data = validation_generator,
