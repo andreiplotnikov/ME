@@ -14,17 +14,7 @@ import time
 
 import ME
 import MEbatch
-'''
-def reset_tf_session():
-    K.clear_session()
-    tf.reset_default_graph()
-    config = tf.ConfigProto(intra_op_parallelism_threads=4,\
-        inter_op_parallelism_threads=4, allow_soft_placement=True,\
-        device_count = {'CPU' : 1, 'GPU' : 0})
-    session = tf.Session(config=config)
-    s = K.set_session(session)
-    return s
-'''
+
 
 def reset_tf_session():
     K.clear_session()
@@ -100,26 +90,31 @@ def build_inverse(spectrum_shape, transitional_shape, parameters_shape):
     return model
 
 def generate_profiles(line_vector, flags, spaces, argument, batch_size):
+    
+    #случайные значения параметров
     param_vector = np.random.random((batch_size, len(flags)))*(spaces[2] - spaces[1]) + spaces[1]
     param_vector *= flags    
     param_vector += (1 - flags)*spaces[0]
         
+    #другое распределение параметров для магнитного поля    
     param_vector[:, 0] = 1000*(1 - np.log(np.e*np.random.rand(batch_size)))
             
     x = np.broadcast_to(argument, (batch_size, len(argument)))             
     
+    #генерация профиля
     if batch_size > 1: profile = MEbatch.ME_ff(line_vector, param_vector, x)
     else: profile = ME.ME_ff(line_vector, param_vector.flatten, argument)
     
     
     
-            
+    #шум со случайной интенсивностью
     noise_level = 0.01*np.random.exponential(size = batch_size)
     noise = np.reshape(noise_level, (-1, 1))*np.random.randn(batch_size, 56*4)
     noise = np.reshape(noise, (batch_size, 56, 4))
     
     profile += noise
-        
+    
+    #Доплеровские сдвиги приводятся к положительным значениям
     param_vector[:, 8] += 50
     param_vector[:, 10] += 50
     
@@ -179,9 +174,11 @@ spectrum_shape  = 56*4
 
 transitional_shape = 100
 
+#названия параметров
 dims_names = ['Strength', 'Inclination', 'Azimuth', 'Doppler broadening', 'Damping', 'Line strength',
               'Continuum intensity', 'Source function gradient', 'Doppler shift', 'Filling factor', 'Stray shift']
 
+#подбираемые параметры
 dims_flags = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 wl0 = 6302.5
@@ -237,8 +234,10 @@ validation_generator = DataGenerator(line_vector = l_v, flags = dims_flags,
 reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.75,
                               verbose=1, patience=5, min_lr=0)
 
+#периодический сброс learning rate к большему значению
 lrd = learning_rate_drop(value = 0.01, period = 50)
 
+#сброс learning rate при достижении малого шага
 lrdt = learning_rate_drop_threshold(value = 0.01, threshold = 1e-5)
 
 
@@ -254,7 +253,7 @@ plt.plot(history.history['val_loss'], label='test')
 plt.legend()
 
 
-
+#проверка на реальных данных
 def check_real(x_c, y_c, spaces):
     directory = 'D:\\fits\\hao\\web\\csac.hao.ucar.edu\\data\\hinode\\sot\\level1\\2017\\09\\05\\SP3D\\20170905_030404\\'
     files_list = os.listdir(directory)
@@ -332,6 +331,7 @@ def save_model():
     name = '.\\models\\' + 'conv-' + str(localtime[0]) + '_' + str(localtime[1]) + '_' + str(localtime[2]) + '_' + str(localtime[3]) + str(localtime[4]) + '.h5'
     inversion.save(name)
     
+#функции для удобства обучения    
 def continue_learning(epochs):
     history = inversion.fit_generator(generator = training_generator, 
                                     validation_data = validation_generator,
