@@ -45,18 +45,18 @@ etta_0 = param_file[7].data[y][x]
 S_0 = param_file[9].data[y][x]
 betta = param_file[10].data[y][x]
 
-Dop_shift = param_file[5].data[y][x]*1e5*wl0*1e-8/3e10*1e8*1e3
+Dop_shift = param_file[5].data[y][x]
 
 filling_factor = param_file[12].data[y][x]
-stray_shift = param_file[13].data[y][x]*1e5*wl0*1e-8/3e10*1e8*1e3
+stray_shift = param_file[13].data[y][x]
 
 line_arg = 1000*(np.array(argument) - wl0)
 
 cont_int = param_file[33].data[y][x]
-profile = np.array(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], line_arg))
+profile = np.array(ME.ME_ff([wl0, g, mu], np.array([B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift]), line_arg))
 
 l_v = [wl0, g, mu]
-p_i = [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift]
+p_i = np.array([B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift])
 
 spectra_con = np.concatenate((spectra[0], spectra[1], spectra[2], spectra[3]))
 
