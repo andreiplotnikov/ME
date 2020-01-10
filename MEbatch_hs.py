@@ -54,7 +54,7 @@ def ME(line_vec, param_vec_batch, x):
     S_0 = param_vec[6]      #Source function 
     S_1 = param_vec[7]    #Source function decrement
     
-    Dop_shift = param_vec[8]*1e-11 #Doppler shift
+    Dop_shift = param_vec[8]*1e5/c*wl0
     
     v = (x.T*1e-11 - Dop_shift.T)/D
     a = gamma
@@ -97,8 +97,9 @@ def ME(line_vec, param_vec_batch, x):
     return np.transpose(np.array([I, Q, U, V]))
 
 def ME_ff(line_vec, param_vec_batch, x):
-    param_vec_batch = np.reshape(param_vec_batch, (1, -1))
-    x = np.reshape(x, (1, -1))
+    if len(param_vec_batch.shape) == 1:
+        param_vec_batch = np.reshape(param_vec_batch, (1, -1))
+        x = np.reshape(x, (1, -1))
     
     param_vec_fill = param_vec_batch[:, :9]
     param_vec_stray = param_vec_fill.copy()
@@ -109,6 +110,7 @@ def ME_ff(line_vec, param_vec_batch, x):
     
     #stray_shift = np.reshape((param_vec_batch.T)[10], (-1, 1))
     stray_shift = (param_vec_batch.T)[10]
+
     
     param_vec_stray[:, 8] = stray_shift
     param_vec_stray[:, 0] = np.zeros(param_vec_batch.shape[0])
