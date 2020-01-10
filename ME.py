@@ -33,7 +33,7 @@ def ME(line_vec, param_vec, x):
     
     
     #constant parameters
-    wl0 = line_vec[0]*1e-10
+    wl0 = line_vec[0]*1e-8
     g = line_vec[1]
     mu = line_vec[2]
     
@@ -42,8 +42,8 @@ def ME(line_vec, param_vec, x):
     theta = param_vec[1]     #inclination
     xi = param_vec[2]        #azimuth
     
-    D = param_vec[3]*1e-13        #Doppler width
-    gamma = param_vec[4]*1e-13    #damping
+    D = param_vec[3]*1e-11        #Doppler width
+    gamma = param_vec[4]*1e-11    #damping
     etta_0 = param_vec[5]   #line strength
     
     cont_int = param_vec[6] #contiuum intensity
@@ -51,10 +51,10 @@ def ME(line_vec, param_vec, x):
     #S_0 = param_vec[6]      #Source function 
     betta = param_vec[7]    #Source function decrement
     
-    Dop_shift = param_vec[8]*1e-13 #Doppler shift
+    Dop_shift = param_vec[8]*1e-11 #Doppler shift
     
     #units
-    v = (x*1e-13 - Dop_shift)/D
+    v = (x*1e-11 - Dop_shift)/D
     a = gamma/D
     v_b = B * wl0*wl0*el_c/(4*np.pi*mass*c*c*D)
     S_0 = cont_int/(1 + betta * mu)
