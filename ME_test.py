@@ -1,18 +1,18 @@
-import ME
+#import ME
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 import os
-import sunpy.wcs
+#import sunpy.wcs
 
-
+import MEbatch_hs as ME
     
 directory = 'C:\\data\\hinode\\sp_20140510_105533\\hao\\web\\csac.hao.ucar.edu\\data\\hinode\\sot\\level1\\2014\\05\\10\\SP3D\\20140510_105533\\'
 files_list = os.listdir(directory)
 param_file = fits.open('C:\\data\\hinode\\20140510_105533.fits')
 
-x = 300
+x = 400
 y = 300
 
 
@@ -35,16 +35,15 @@ mu = 1
 
 B = param_file[1].data[y][x]
 
-theta = param_file[2].data[y][x]/180*np.pi
-xi = param_file[3].data[y][x]/180*np.pi
+theta = param_file[2].data[y][x]
+xi = param_file[3].data[y][x]
 
 D = param_file[6].data[y][x]
-gamma = D*param_file[8].data[y][x]
-etta_0 = param_file[7].data[y][x]/np.sqrt(np.pi)
-
+gamma = param_file[8].data[y][x]
+etta_0 = param_file[7].data[y][x]
 
 S_0 = param_file[9].data[y][x]
-betta = param_file[10].data[y][x]/S_0
+betta = param_file[10].data[y][x]
 
 Dop_shift = param_file[5].data[y][x]*1e5*wl0*1e-8/3e10*1e8*1e3
 
@@ -54,26 +53,23 @@ stray_shift = param_file[13].data[y][x]*1e5*wl0*1e-8/3e10*1e8*1e3
 line_arg = 1000*(np.array(argument) - wl0)
 
 cont_int = param_file[33].data[y][x]
-I = list(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], 1000*(argument[i] - wl0))[0] for i in range(len(argument)))
-Q = list(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], 1000*(argument[i] - wl0))[1] for i in range(len(argument)))
-U = list(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], 1000*(argument[i] - wl0))[2] for i in range(len(argument)))
-V = list(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], 1000*(argument[i] - wl0))[3] for i in range(len(argument)))
+profile = np.array(ME.ME_ff([wl0, g, mu], [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift], line_arg))
 
 l_v = [wl0, g, mu]
 p_i = [B, theta, xi, D, gamma, etta_0, S_0, betta, Dop_shift, filling_factor, stray_shift]
 
 spectra_con = np.concatenate((spectra[0], spectra[1], spectra[2], spectra[3]))
 
-line_con = ME.ME_con(l_v, p_i, line_arg)
+profile = np.reshape(profile.T, (224))
 
 #p = scipy.optimize.curve_fit(lambda x, *p_v: ME.ME_ff(l_v, p_v, x), line_arg, np.swapaxes(spectra, 0, 1), p0 = p_i, maxfev = 10000)[0]
 
 
-p = scipy.optimize.leastsq(lambda p_v: np.sum(np.abs(ME.ME_ff(l_v, p_v, line_arg) - np.swapaxes(spectra, 0, 1)), 1), x0 = p_i)[0]
+p = scipy.optimize.leastsq(lambda p_v: np.sum(np.abs(np.reshape(ME.ME_ff(l_v, p_v, line_arg), (56, 4)) - np.swapaxes(spectra, 0, 1)), 1), x0 = p_i)[0]
 I_opt, Q_opt, U_opt, V_opt = np.transpose(ME.ME_ff([wl0, g, mu], p , line_arg))
 
 
-line = np.array([I, Q, U, V])
+I, Q, U, V = np.transpose(ME.ME_ff([wl0, g, mu], p_i , line_arg))
 
 plt.subplot(221)
 plt.plot(argument, spectra[0])
