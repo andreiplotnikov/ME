@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r"D:\\ME-master\\ME-master")
+sys.path.append(r"..\\")
 
 import tensorflow as tf
 import pickle
