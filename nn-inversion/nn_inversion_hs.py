@@ -231,7 +231,7 @@ training_generator = DataGenerator_H(line_vector = l_v, argument = line_arg,
                                      batch_size = 1000, base = train, list_IDs = np.arange(train.shape[0]))
 
 validation_generator = DataGenerator_H(line_vector = l_v, argument = line_arg, 
-                                     batch_size = 1000, base = test, list_IDs = np.arange(train.shape[1]))
+                                     batch_size = 1000, base = test, list_IDs = np.arange(test.shape[1]))
 
 #dec_adamax = keras.optimizers.Adamax(decay = 1e-5)
 
