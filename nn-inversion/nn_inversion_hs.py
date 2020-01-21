@@ -1,8 +1,7 @@
 import sys
-sys.path.append(r"..\\")
+sys.path.append(r"D:\\ME-master\\ME-master")
 
 import tensorflow as tf
-import pickle
 from sklearn.model_selection import train_test_split
 import keras, keras.layers as L, keras.backend as K
 from keras.callbacks import EarlyStopping
@@ -14,7 +13,6 @@ import os
 import astropy.io.fits as fits
 import time
 
-from sklearn.model_selection import train_test_split
 
 import ME
 import MEbatch
@@ -37,6 +35,7 @@ def plot_spectrum(profile):
         
 def build_inverse(spectrum_shape, transitional_shape, parameters_shape):
     
+        
     inp = L.Input((spectrum_shape,))
          
     net = L.BatchNormalization(axis = 1)(inp)
@@ -68,8 +67,8 @@ def build_inverse(spectrum_shape, transitional_shape, parameters_shape):
     
     
     net = L.Concatenate()([encod, inp])
-    out = L.Dense(parameters_shape*3)(net)
-    out = L.Dense(parameters_shape)(net)
+    out = L.Dense(parameters_shape*3, kernel_initializer='random_uniform')(net)
+    out = L.Dense(parameters_shape, kernel_initializer='random_uniform')(net)
     
     model = keras.models.Model(inputs = inp, outputs = out)
   
@@ -161,9 +160,16 @@ class DataGenerator_H(keras.utils.Sequence):
         
         profile = MEbatch_hs.ME_ff(self.line_vector, X, x_arg)
         
-        X[:, 8] += 10
-        X[:, 10] += 10
+        noise_level = 100/cont
+        noise_level = np.reshape(noise_level, (-1, 1, 1))
+        noise = noise_level*np.random.normal(size = profile.shape)
         
+        profile += noise
+        
+        X[:,8] += 10
+        X[:,10] += 10
+        
+        profile[:,:,1:] = profile[:,:,1:]*3
         
         param, prof = np.log1p(X), np.reshape(np.swapaxes(profile, 1, 2), (-1, 4*56))
         
@@ -224,19 +230,20 @@ inversion = keras.models.Model(inputs=inp, outputs=out_parameters)
 
 base = fits.open('pb\\parameters_base.fits')[0].data
 
+
 train, test = train_test_split(base, test_size = 0.1)
 
 
 training_generator = DataGenerator_H(line_vector = l_v, argument = line_arg, 
-                                     batch_size = 1000, base = train, list_IDs = np.arange(train.shape[0]))
+                                     batch_size = 30000, base = train, list_IDs = np.arange(train.shape[0]))
 
 validation_generator = DataGenerator_H(line_vector = l_v, argument = line_arg, 
-                                     batch_size = 1000, base = test, list_IDs = np.arange(test.shape[0]))
+                                     batch_size = 30000, base = test, list_IDs = np.arange(test.shape[0]))
 
 #dec_adamax = keras.optimizers.Adamax(decay = 1e-5)
 
 reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.75,
-                              verbose=1, patience=5, min_lr=0)
+                              verbose=1, patience=2, min_lr=0)
 
 
 lrd = learning_rate_drop(value = 0.01, period = 50)
@@ -245,23 +252,23 @@ inversion.compile(optimizer = 'adamax', loss='mse')
 
 history = inversion.fit_generator(generator = training_generator, 
                                     validation_data = validation_generator,
-                                    epochs = 5, callbacks=[reduce_lr, lrd])
+                                    epochs = 20, callbacks=[reduce_lr, lrd])
 
 
 plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='test')
+plt.plot(history.history['val_loss'], label='test') 
 plt.legend()
 
 
 
-def check_real(x_c, y_c, spaces):
+def check_real(x_c, y_c):
     directory = 'D:\\fits\\hao\\web\\csac.hao.ucar.edu\\data\\hinode\\sot\\level1\\2017\\09\\05\\SP3D\\20170905_030404\\'
     files_list = os.listdir(directory)
     spectra_file = fits.open(directory + files_list[x_c])
     real_I = spectra_file[0].data[0][y_c][56:].astype('float64')*2
-    real_Q = spectra_file[0].data[1][y_c][56:].astype('float64')
-    real_U = spectra_file[0].data[2][y_c][56:].astype('float64')
-    real_V = spectra_file[0].data[3][y_c][56:].astype('float64')
+    real_Q = spectra_file[0].data[1][y_c][56:].astype('float64')*3
+    real_U = spectra_file[0].data[2][y_c][56:].astype('float64')*3
+    real_V = spectra_file[0].data[3][y_c][56:].astype('float64')*3
             
                 
     real_sp = np.concatenate((real_I, real_Q, real_U, real_V))
@@ -273,11 +280,11 @@ def check_real(x_c, y_c, spaces):
     pred_params = np.reshape(inversion.predict(np.reshape(real_sp, (1, 224))), (11))
     
     pred_params = np.expm1(pred_params)
-    pred_params[:,8] -= 50
-    pred_params[:,10] -= 50
+    pred_params[8] -= 10
+    pred_params[10] -= 10
     print(pred_params)
     
-    pred_spectra = np.reshape(ME.ME_ff(l_v, pred_params, line_arg).T, (224, 1))
+    pred_spectra = np.reshape(MEbatch_hs.ME_ff(l_v, pred_params, line_arg).T, (224, 1))
     
     pred_spectra /= np.max(pred_spectra)
     
@@ -285,14 +292,14 @@ def check_real(x_c, y_c, spaces):
     plot_spectrum(pred_spectra)
     plt.show()
     
-def params_from_real(x_c, y_c, spaces):
+def params_from_real(x_c, y_c):
     directory = 'D:\\fits\\hao\\web\\csac.hao.ucar.edu\\data\\hinode\\sot\\level1\\2017\\09\\05\\SP3D\\20170905_030404\\'
     files_list = os.listdir(directory)
     spectra_file = fits.open(directory + files_list[x_c])
     real_I = spectra_file[0].data[0][y_c][56:].astype('float64')*2
-    real_Q = spectra_file[0].data[1][y_c][56:].astype('float64')
-    real_U = spectra_file[0].data[2][y_c][56:].astype('float64')
-    real_V = spectra_file[0].data[3][y_c][56:].astype('float64')
+    real_Q = spectra_file[0].data[1][y_c][56:].astype('float64')*3
+    real_U = spectra_file[0].data[2][y_c][56:].astype('float64')*3
+    real_V = spectra_file[0].data[3][y_c][56:].astype('float64')*3
                 
     real_sp = np.concatenate((real_I, real_Q, real_U, real_V))
     
@@ -301,24 +308,24 @@ def params_from_real(x_c, y_c, spaces):
     pred_params = np.reshape(inversion.predict(np.reshape(real_sp, (1, 224))), (11))
     
     pred_params = np.expm1(pred_params)
-    pred_params[:,8] -= 50
-    pred_params[:,10] -= 50
+    pred_params[8] -= 10
+    pred_params[10] -= 10
     
     print('predicted first: ', pred_params)
     
-    pred_spectra = np.reshape(ME.ME_ff(l_v, pred_params, line_arg).T, (224, 1))
+    pred_spectra = np.reshape(MEbatch_hs.ME_ff(l_v, pred_params, line_arg).T, (224, 1))
     
     pred_spectra /= np.max(pred_spectra)
     
     pred_params_2 = np.reshape(inversion.predict(np.reshape(pred_spectra, (1, 224))), (11))
     
     pred_params_2 = np.expm1(pred_params_2)
-    pred_params_2[:,8] -= 50
-    pred_params_2[:,10] -= 50
+    pred_params_2[8] -= 10
+    pred_params_2[10] -= 10
     
     print('predicted second: ', pred_params_2)
     
-    pred_spectra_2 = np.reshape(ME.ME_ff(l_v, pred_params_2, line_arg).T, (224, 1))
+    pred_spectra_2 = np.reshape(MEbatch_hs.ME_ff(l_v, pred_params_2, line_arg).T, (224, 1))
     
     pred_spectra_2 /= np.max(pred_spectra_2)
     
