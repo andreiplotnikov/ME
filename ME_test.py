@@ -12,14 +12,18 @@ directory = 'C:\\data\\hinode\\sp_20140510_105533\\hao\\web\\csac.hao.ucar.edu\\
 files_list = os.listdir(directory)
 param_file = fits.open('C:\\data\\hinode\\20140510_105533.fits')
 
-x = 400
+x = 210
 y = 300
 
 
 spectra_file = fits.open(directory + str(files_list[x]))
 spectra = np.array(list(spectra_file[0].data[i][y][56:] for i in range(4)))
 
+
+
 spectra[0] *= 2
+
+spectra = spectra/np.max(spectra)
 
 ref_length = spectra_file[0].header.get('CRVAL1')
 ref_pixel = spectra_file[0].header.get('CRPIX1')
@@ -69,27 +73,29 @@ p = scipy.optimize.leastsq(lambda p_v: np.sum(np.abs(np.reshape(ME.ME_ff(l_v, p_
 I_opt, Q_opt, U_opt, V_opt = np.transpose(ME.ME_ff([wl0, g, mu], p , line_arg))
 
 
-I, Q, U, V = np.transpose(ME.ME_ff([wl0, g, mu], p_i , line_arg))
+I, Q, U, V = np.transpose(ME.ME_ff([wl0, g, mu], p_i , line_arg))/np.max(np.transpose(ME.ME_ff([wl0, g, mu], p_i , line_arg)))
+
+
 
 plt.subplot(221)
 plt.plot(argument, spectra[0])
 plt.plot(argument, I, linestyle='dashed')
-plt.plot(argument, I_opt)
+#plt.plot(argument, I_opt)
 
 plt.subplot(222)
 plt.plot(argument, spectra[1])
 plt.plot(argument, Q, linestyle='dashed')
-plt.plot(argument, Q_opt)
+#plt.plot(argument, Q_opt)
 
 plt.subplot(223)
 plt.plot(argument, spectra[2])
 plt.plot(argument, U, linestyle='dashed')
-plt.plot(argument, U_opt)
+#plt.plot(argument, U_opt)
 
 plt.subplot(224)
 plt.plot(argument, spectra[3])
 plt.plot(argument, V, linestyle='dashed')
-plt.plot(argument, V_opt)
+#plt.plot(argument, V_opt)
 
 plt.show()
 
