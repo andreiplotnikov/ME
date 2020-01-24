@@ -15,7 +15,7 @@ files_list = os.listdir(directory)
 
 Y_len, X_len = (param_file[1].data.shape)
 
-Y_len, X_len = (200, 100)
+X_len = 300
 
 params = np.empty( (X_len, Y_len, 11))
 
@@ -69,7 +69,7 @@ for X_c in range(X_len):
         
         I, Q, U, V = MEbatch_hs.ME_ff([wl0, g, mu], p_i, line_arg)[0].T
         
-        #p_i = [500, 0, 0, 30, 20, 10, 20000, 2, 0, 1, 0]
+        #p_i = np.array([500, 45, 45, 30, 1, 10, 20000, 20000, 0, 0.6, 0])
         
         
         spectra_con = np.concatenate((spectra[0], spectra[1], spectra[2], spectra[3]))
@@ -78,7 +78,11 @@ for X_c in range(X_len):
         
         weights = np.array([1, 3, 3, 3])
         
-        p = scipy.optimize.leastsq(lambda p_v: np.sum(np.abs(MEbatch_hs.ME_ff(l_v, p_v, line_arg)[0]*weights - np.swapaxes(spectra, 0, 1)*weights), 1), x0 = p_i)[0]
+        bounds = ([0, 0, 0, 10, 0, 0.01, 0, 0, -15, 0, -15], [6000, 180, 180, 150, 2, 150, np.inf, np.inf, 15, 1, 15])
+        
+        p = scipy.optimize.least_squares(lambda p_v: np.sum(np.abs(MEbatch_hs.ME_ff(l_v, p_v, line_arg)[0]*weights - np.swapaxes(spectra, 0, 1)*weights), 1), x0 = p_i, bounds = bounds).x
+        
+        
         
         params[X_c][Y_c] = p
         
@@ -109,5 +113,8 @@ plt.plot(argument, V, linestyle='dashed')
 plt.plot(argument, V_opt)
 
 plt.show()
+
+hdul = fits.HDUList([fits.PrimaryHDU(params)])
+hdul.writeto('inverted_parameters.fits', overwrite = 1) 
 
 #print(S_0, betta)
