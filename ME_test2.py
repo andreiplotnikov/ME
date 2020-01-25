@@ -78,7 +78,7 @@ for X_c in range(X_len):
         
         weights = np.array([1, 3, 3, 3])
         
-        bounds = ([0, 0, 0, 10, 0, 0.01, 0, 0, -15, 0, -15], [6000, 180, 180, 150, 2, 150, np.inf, np.inf, 15, 1, 15])
+        bounds = ([0, 0, 0, 10, 0, 0, 0, 0, -15, 0, -15], [6000, 180, 180, 150, 2, 150, np.inf, np.inf, 15, 1, 15])
         
         p = scipy.optimize.least_squares(lambda p_v: np.sum(np.abs(MEbatch_hs.ME_ff(l_v, p_v, line_arg)[0]*weights - np.swapaxes(spectra, 0, 1)*weights), 1), x0 = p_i, bounds = bounds).x
         
