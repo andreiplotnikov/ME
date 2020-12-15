@@ -23,7 +23,7 @@ parameters = np.empty((0, 11))
 
 for i in range(len(files)):
     p = np.empty( (files[i][1].data.shape[0]*files[i][1].data.shape[1], 11))
-    for j, k in enumerate([1, 2, 3, 6, 8, 7, 33, 10, 5, 12, 13]):
+    for j, k in enumerate([1, 2, 3, 6, 8, 7, 9, 10, 5, 12, 13]):
         p[:, j] = files[i][k].data.flatten()
     parameters = np.concatenate((parameters, p), axis = 0)
 
